@@ -141,6 +141,32 @@
     .crowd-label strong{color:var(--text);font-weight:600}
     .card-tip{font-size:11px;line-height:1.5;color:var(--muted);padding:7px 9px;border-radius:5px;background:var(--bg);border-left:3px solid transparent}
     .card-tip strong{color:var(--text)}
+
+    /* DRAG HANDLE & COLLAPSE */
+    .drag-handle{flex-shrink:0;font-size:13px;color:var(--border);cursor:grab;padding:2px 5px 2px 0;line-height:1;user-select:none;transition:color .15s}
+    .drag-handle:hover{color:var(--muted)}
+    .card.is-dragging{opacity:.35;transform:scale(.98);box-shadow:0 8px 24px rgba(0,0,0,.15)}
+    .card-collapse-btn{flex-shrink:0;background:none;border:none;cursor:pointer;font-size:11px;color:var(--muted);padding:3px 6px;border-radius:4px;line-height:1;transition:transform .2s,color .15s;font-family:inherit;margin-left:2px}
+    .card-collapse-btn:hover{color:var(--text);background:var(--bg)}
+    .card.is-collapsed .card-collapse-btn{transform:rotate(-90deg)}
+    .card.is-collapsed .card-inner{display:none}
+    .card.is-collapsed .card-stripe{height:3px}
+    .card.is-collapsed{cursor:default}
+
+    /* RESTAURANT SECTION */
+    .res-section{margin-top:52px}
+    .res-banner{background:#233D1A;color:#fff;border-radius:10px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px}
+    .res-banner-icon{font-size:28px;flex-shrink:0}
+    .res-banner-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:3px}
+    .res-banner-sub{font-size:12px;color:rgba(255,255,255,.7);line-height:1.5}
+    .res-price{flex-shrink:0;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--muted);margin-top:1px}
+    /* restaurant chips */
+    .chip-res-veg{background:#E5F2EA;color:#155A30}
+    .chip-res-casual{background:#FEF2E4;color:#B85A00}
+    .chip-res-sitdown{background:#E5ECF8;color:#003080}
+    .chip-res-family{background:#FDF6E3;color:#8B6500}
+    .chip-res-bkfast{background:#F0E8EE;color:#620040}
+    .chip-res-local{background:#F0F4FB;color:#1A4A8A}
   </style>
 </head>
 <body>
@@ -203,6 +229,18 @@
       </div>
     </div>
     <div class="grid" id="daytrip-grid"></div>
+  </section>
+
+  <!-- RESTAURANTS -->
+  <section class="res-section" id="res-section">
+    <div class="res-banner">
+      <div class="res-banner-icon">🍽</div>
+      <div>
+        <div class="res-banner-title">Local Restaurants — Kilburn &amp; West Hampstead</div>
+        <div class="res-banner-sub">Walking distance or a short bus ride from home base · NW6 area · strong vegetarian focus · all bookable from the flat</div>
+      </div>
+    </div>
+    <div class="grid" id="res-grid"></div>
   </section>
 </main>
 
@@ -830,13 +868,16 @@ function buildCard(act) {
 
   const el = document.createElement('article');
   el.className = 'card';
+  el.setAttribute('draggable','true');
   el.dataset.tags = act.tags.join(',');
   el.dataset.weather = act.weather;
   el.innerHTML = `
     <div class="card-stripe" style="background:${stripe}"></div>
     <div class="card-header">
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
       <h2 class="card-title">${act.title}</h2>
       <span class="weather-badge">${weatherIcon}</span>
+      <button class="card-collapse-btn" aria-label="Collapse card">▼</button>
     </div>
     <div class="card-inner">
       <div class="card-tags">${chips}</div>
@@ -859,6 +900,10 @@ function buildCard(act) {
       </div>
       <div class="card-tip" style="background:${tipBg};border-left-color:${stripe}"><strong>Tip:</strong> ${act.tip}</div>
     </div>`;
+  el.querySelector('.card-collapse-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    el.classList.toggle('is-collapsed');
+  });
   return el;
 }
 
@@ -872,7 +917,7 @@ const countBar = document.getElementById('count-bar');
 let activeGroup = 'all', activeWeather = 'all';
 
 function applyFilters() {
-  const cards = document.querySelectorAll('.card');
+  const cards = document.querySelectorAll('#london-grid .card, #daytrip-grid .card');
   let shown = 0;
   cards.forEach(c => {
     const gm = activeGroup==='all' || c.dataset.tags.split(',').includes(activeGroup);
@@ -899,6 +944,224 @@ document.querySelectorAll('.w-btn').forEach(b => b.addEventListener('click', () 
   applyFilters();
 }));
 applyFilters();
+
+// ── Drag-to-reorder ───────────────────────────────────────────────────────────
+function enableDragSort(grid) {
+  let src = null;
+  grid.addEventListener('dragstart', e => {
+    src = e.target.closest('.card');
+    if (!src) return;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => src && src.classList.add('is-dragging'), 0);
+  });
+  grid.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const target = e.target.closest('.card');
+    if (!target || target === src || target.classList.contains('is-hidden')) return;
+    const {top, height} = target.getBoundingClientRect();
+    grid.insertBefore(src, e.clientY < top + height / 2 ? target : target.nextElementSibling);
+  });
+  grid.addEventListener('dragend', () => {
+    if (src) src.classList.remove('is-dragging');
+    src = null;
+  });
+}
+enableDragSort(londonGrid);
+enableDragSort(daytripGrid);
+
+// ── Restaurants ───────────────────────────────────────────────────────────────
+const RES_CHIPS = {
+  veg:     {cls:'chip-res-veg',    label:'🥗 Veggie-led'},
+  casual:  {cls:'chip-res-casual', label:'Casual'},
+  sitdown: {cls:'chip-res-sitdown',label:'Sit-down'},
+  family:  {cls:'chip-res-family', label:'Toddler-OK'},
+  bkfast:  {cls:'chip-res-bkfast', label:'Breakfast'},
+  local:   {cls:'chip-res-local',  label:'Walkable'}
+};
+
+const restaurants = [
+  {
+    name:"Ariana II",
+    cuisine:"🫓 Afghan",
+    tags:['local','casual','veg'],
+    price:"££",stripe:"#4A6741",
+    walk:"5 min walk from Kilburn High Road station",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=Ariana+Afghan+Restaurant+Kilburn+High+Road+London+NW6",
+    highlights:"One of London's finest Afghan restaurants and a genuine Kilburn institution; hand-stretched aushak noodles, lamb kaddo pumpkin stew, bolani flatbreads, and slow-cooked rice dishes — deeply flavoured and very generous portions",
+    vegNote:"Excellent vegetarian section: aushak (leek and coriander dumplings in yoghurt sauce), kaddo borani (slow-baked pumpkin with garlic yoghurt and tomato), challow basmati with lentil-based korms — all outstanding and good value",
+    booking:"No reservations taken — walk-in only. Arrives early or expect a short queue on weekends. Worth it.",
+    tip:"One of the best meals within a 5-minute walk of the flat. The aushak dumplings are the dish to order. Cash and card accepted."
+  },
+  {
+    name:"Salusbury Pub & Dining Room",
+    cuisine:"🍺 British Gastropub",
+    tags:['local','casual','family','veg'],
+    price:"££",stripe:"#8B4513",
+    walk:"12 min walk via Brondesbury Road; or bus 6 to Salusbury Road",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=Salusbury+Pub+Dining+Room+Queens+Park+London+NW6",
+    highlights:"Excellent Queen's Park gastropub with a proper kitchen; seasonal British cooking that changes regularly; large outdoor garden — perfect for the group on warm evenings; relaxed and genuinely family-friendly at lunch; Sunday roast is a local highlight",
+    vegNote:"Always two or three strong vegetarian mains on the menu — the kitchen takes vegetable-led cooking seriously. The Sunday roast has a very good nut roast option. Garden dining is ideal for the whole group.",
+    booking:"Essential for weekend dinner and Sunday lunch. Weekday lunch is generally walk-in. Garden tables book out fast in good weather.",
+    tip:"The Sunday roast is one of the better ones in NW London — book a garden table a few days ahead. A very good option for the whole group including the toddler."
+  },
+  {
+    name:"Ostuni",
+    cuisine:"🍝 Pugliese Italian",
+    tags:['local','sitdown','veg'],
+    price:"£££",stripe:"#C41E1E",
+    walk:"15 min walk; or bus 6 or 98 to Queen's Park",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=Ostuni+Restaurant+Lonsdale+Road+Queens+Park+London+NW6",
+    highlights:"Authentic southern Italian cooking from Puglia — orecchiette with various slow-cooked sauces, burrata, fave e cicoria, wood-fired dishes; one of the best Italian restaurants in north-west London; intimate, warm, and reliably excellent",
+    vegNote:"Pugliese cuisine is naturally vegetable-forward: orecchiette alle cime di rapa (bitter turnip tops), burrata with roasted peppers, fave e cicoria (broad bean purée with wild chicory) are all standout vegetarian dishes. One of the best vegetarian Italian meals within easy reach.",
+    booking:"Book at least a week ahead — consistently one of the most popular restaurants in the area. Essential on weekends.",
+    tip:"The orecchiette alle cime di rapa is a Pugliese signature and a revelation if you haven't had it. Don't skip the burrata to start. This is a special-occasion dinner option."
+  },
+  {
+    name:"Jin Kichi",
+    cuisine:"🍱 Japanese",
+    tags:['sitdown','veg'],
+    price:"££–£££",stripe:"#8B0000",
+    walk:"25 min walk (uphill through Hampstead); or bus C11 direct from Kilburn (~20 min)",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=Jin+Kichi+73+Heath+Street+Hampstead+London+NW3",
+    highlights:"Long-established Japanese restaurant on Hampstead's Heath Street; yakitori over charcoal, sashimi, tonkatsu, and izakaya-style small plates; one of the most authentic Japanese experiences in North London — consistently excellent over many years",
+    vegNote:"Good range of vegetarian options: agedashi tofu, yasai yakitori (mixed vegetable charcoal skewers), edamame, vegetable tempura, and several vegetarian mains. Ask for the vegetarian version of the mixed skewer set.",
+    booking:"Essential — book at least a week ahead for weekends. This fills up consistently year-round.",
+    tip:"Combine with a walk up Hampstead High Street before dinner. The bus C11 from Kilburn High Road stops right nearby — easier than the uphill walk. Evening atmosphere is the best."
+  },
+  {
+    name:"La Brocca",
+    cuisine:"🍕 Italian Trattoria",
+    tags:['local','casual','family','veg'],
+    price:"££",stripe:"#006B6B",
+    walk:"10 min walk along West End Lane",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=La+Brocca+West+End+Lane+West+Hampstead+London+NW6",
+    highlights:"Well-established West Hampstead trattoria; wood-fired pizzas, classic pasta, reliable Italian cooking at fair prices; genuinely family-friendly with highchairs and a relaxed atmosphere; one of the most consistent neighbourhood restaurants in the area",
+    vegNote:"Excellent for vegetarians: the wood-fired margherita and various vegetable-topped pizzas are outstanding; several pasta dishes are naturally vegetarian. One of the most reliably good vegetarian Italian options within walking distance.",
+    booking:"Recommended for weekend dinner. Weekday evenings and lunch are generally walk-in.",
+    tip:"One of the best family-friendly options within easy walking distance — relaxed enough for a toddler, good enough for the whole group. The wood-fired pizzas are consistently the highlight."
+  },
+  {
+    name:"Nautilus Fish Restaurant",
+    cuisine:"🐟 Fish & Chips",
+    tags:['local','casual'],
+    price:"££",stripe:"#1A4080",
+    walk:"15 min walk via West End Lane to Fortune Green Road",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=Nautilus+Fish+Restaurant+Fortune+Green+Road+West+Hampstead+London",
+    highlights:"One of London's finest traditional fish and chip restaurants; fish sourced from Billingsgate daily; table-service dining with no compromise on quality; has appeared on best-of-London fish and chip lists for decades",
+    vegNote:"Limited vegetarian options — this is primarily a fish restaurant. A brilliant destination for the fish-eaters in the group; vegetarians may prefer Ariana or La Brocca on the same evening.",
+    booking:"Walk-in generally; can fill on weekend evenings. Closed Sundays.",
+    tip:"Closed Sundays. This is the destination for the fish-eaters in the group — the quality is exceptional. Call ahead to confirm hours before making the walk."
+  },
+  {
+    name:"GAIL's Artisan Bakery",
+    cuisine:"☕ Bakery & Café",
+    tags:['local','casual','family','bkfast','veg'],
+    price:"£",stripe:"#2C3E1A",
+    walk:"10 min walk to West Hampstead branch; also branches on Chamberlayne Road and Hampstead High Street",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=GAIL%27s+Bakery+West+Hampstead+London",
+    highlights:"The best morning stop within easy reach of home base; exceptional sourdough, croissants, and seasonal pastries; good coffee; relaxed café seating; ideal for a group breakfast before a big day out — or a pick-up for a picnic to Hampstead Heath",
+    vegNote:"Almost entirely vegetarian by default — pastries, open-faced sandwiches on fresh sourdough, seasonal salads, and hot brunch dishes are all excellent for plant-based eating. One of the most consistently good morning options in the area.",
+    booking:"No bookings — walk-in only. Can be busy on weekend mornings but moves quickly.",
+    tip:"Pick up sourdough and pastries here before heading to Hampstead Heath for a picnic. Best visited early when the bread is freshest. Also a good afternoon coffee stop on the way back from the Heath."
+  },
+  {
+    name:"Golders Green Road — Vegetarian Strip",
+    cuisine:"🌿 Indian, Middle Eastern & Jewish vegetarian",
+    tags:['veg','casual'],
+    price:"£–££",stripe:"#1A6B3A",
+    walk:"10 min by bus 139 or 189 from Kilburn; or 30 min walk through Hampstead",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=Golders+Green+Road+London+NW11",
+    highlights:"The most concentrated stretch of vegetarian restaurants and delis in North London; Rani (acclaimed Indian Jain vegetarian restaurant), Taboon Middle Eastern bakery, Israeli falafel bars, kosher delis, and dedicated vegetarian cafés across cuisines — an extraordinary variety within a few hundred metres",
+    vegNote:"This is the vegetarian destination of the trip. Rani on Finchley Road is one of London's finest Indian vegetarian restaurants — Jain cuisine (no onions or garlic), thalis, dosas, and chaat. Taboon Bakery has outstanding Middle Eastern flatbreads and plant-based spreads. The kosher bakeries produce exceptional challah and pastries.",
+    booking:"Rani requires a reservation on weekends. Most other venues are walk-in.",
+    tip:"Combine with Golders Hill Park zoo on the same afternoon — the road is minutes from the park's southern entrance. Also pairs perfectly with the Hill Garden & Pergola for a complete north London afternoon."
+  },
+  {
+    name:"Took Took",
+    cuisine:"🌶️ Thai Street Food",
+    tags:['local','casual','veg'],
+    price:"££",stripe:"#B85A00",
+    walk:"15 min walk via West End Lane; or bus 139 to Fortune Green Road",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=Took+Took+Thai+West+Hampstead+London",
+    highlights:"Neighbourhood Thai restaurant in West Hampstead with a loyal local following; authentic Thai street-food dishes, fresh ingredients, generous portions; relaxed, no-fuss atmosphere that works equally well for a casual weeknight dinner or a group meal; good range of noodle and rice dishes",
+    vegNote:"Good range of vegetarian options throughout the menu — tofu pad thai, green and massaman vegetable curries, vegetable spring rolls, and stir-fries. Ask for tofu substitutions on any meat dish. A reliable and affordable vegetarian Thai option within easy reach.",
+    booking:"Book ahead for weekend evenings — popular with locals. Weeknight walk-in is usually fine.",
+    tip:"One of the most reliable neighbourhood Thai restaurants in North West London. Good for a relaxed group dinner without the need for central London prices or travel."
+  },
+  {
+    name:"Colaba",
+    cuisine:"🍛 Modern Mumbai Indian",
+    tags:['local','sitdown','veg'],
+    price:"££–£££",stripe:"#8B2500",
+    walk:"10–12 min walk; West Hampstead area · <a href='https://www.colabalondon.com' target='_blank' rel='noopener'>colabalondon.com</a>",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=Colaba+Restaurant+West+Hampstead+London",
+    highlights:"Inspired by Mumbai's historic Colaba neighbourhood — the art deco cinemas, palatial hotels, fish markets, and legendary home kitchens that define the area; dishes celebrate the food of Colaba's most famous haunts; cocktails blend Indian spices with classic western tipples; a warmer, more atmospheric Indian dining experience than a standard curry house",
+    vegNote:"Mumbai cuisine is deeply vegetarian-friendly — Colaba's menu reflects this with vegetarian dishes from the Irani cafés, street stalls, and home kitchens of the neighbourhood. Expect thoughtful vegetarian cooking rather than a standard 'meat dish minus the meat' approach.",
+    booking:"Book ahead, especially for weekends. Check colabalondon.com for current hours and reservations.",
+    tip:"The cocktail list is a highlight — Indian botanicals and spices with classic formats. Worth visiting for drinks before dinner elsewhere, or as a full evening destination for the adults. One of the most interesting and distinctive restaurants within walking distance."
+  },
+  {
+    name:"Panzer's Deli",
+    cuisine:"🥪 Jewish Deli & Bakery",
+    tags:['casual','bkfast','veg'],
+    price:"££",stripe:"#1A4080",
+    walk:"15 min by bus (328 or Jubilee to St John's Wood); or 25 min walk via Abbey Road",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=Panzer%27s+Deli+13+Circus+Road+London+NW8",
+    highlights:"One of London's finest Jewish delicatessens — bagels, smoked salmon, challah, pastrami, artisan cheeses, pickled foods, and handmade sandwiches; a proper deli counter where you can build a picnic; open from early morning; a local institution of several decades standing on Circus Road in St John's Wood",
+    vegNote:"Excellent for vegetarians: outstanding bagels with cream cheese and smoked salmon (or cream cheese alone), vegetarian chopped salads, artisan cheeses, pickled vegetables, and freshly baked challah. One of the best picnic-provision stops in North London.",
+    booking:"No booking — walk-in counter service from morning. Go early on weekends for the best selection.",
+    tip:"The best single stop for stocking up on picnic provisions before heading to Hampstead Heath, Regent's Park, or the canal. Buy a whole challah, some cheeses, and whatever looks good at the counter — the Heath picnic is guaranteed to be excellent. Abbey Road zebra crossing is a 5 min walk away."
+  },
+  {
+    name:"West End Lane Bakeries & Quick Bites",
+    cuisine:"☕ Cafés, Bakeries & Sandwich Shops",
+    tags:['local','casual','bkfast','veg'],
+    price:"£",stripe:"#555555",
+    walk:"5–12 min walk along West End Lane from Kilburn",
+    mapUrl:"https://www.google.com/maps/search/?api=1&query=West+End+Lane+West+Hampstead+London+NW6+cafes",
+    highlights:"West End Lane and the immediate Kilburn area have a solid strip of independent cafés, artisan bakeries, and sandwich shops ideal for morning provisions before heading out; good for a quick breakfast, a packed lunch for the park, or a late-afternoon coffee on the way back",
+    vegNote:"The café strip on West End Lane is largely vegetarian-friendly by default — most serve egg-based breakfasts, avocado toasts, salads, and pastries. For grab-and-go, the Waitrose on Kilburn High Road has an excellent deli counter with vegetarian sandwiches, salads, and hot food. M&S Food on the High Road is consistently good for picnic-ready options.",
+    booking:"No booking needed for any of these — all walk-in.",
+    tip:"For a day at Hampstead Heath or the canal, pick up provisions on the way rather than buying at the destination: Waitrose deli counter (Kilburn High Road) for sandwiches and salads, GAIL's (West End Lane) for sourdough and pastries, or a local Polish deli on Kilburn High Road for excellent rye breads, cheeses, and cold cuts at very good prices."
+  }
+];
+
+function buildRestaurantCard(r) {
+  const chips = r.tags.map(t => `<span class="chip ${RES_CHIPS[t].cls}">${RES_CHIPS[t].label}</span>`).join('');
+  const el = document.createElement('article');
+  el.className = 'card res-card';
+  el.setAttribute('draggable','true');
+  el.innerHTML = `
+    <div class="card-stripe" style="background:${r.stripe}"></div>
+    <div class="card-header">
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <h2 class="card-title">${r.name}</h2>
+      <span class="res-price">${r.price}</span>
+      <button class="card-collapse-btn" aria-label="Collapse card">▼</button>
+    </div>
+    <div class="card-inner">
+      <div class="card-tags">${chips}</div>
+      <div class="info-rows">
+        <div class="info-row"><span class="info-icon">🍴</span><div><div class="info-label">Cuisine</div><div class="info-val">${r.cuisine}</div></div></div>
+        <div class="info-row"><span class="info-icon">✦</span><div><div class="info-label">Highlights</div><div class="info-val">${r.highlights}</div></div></div>
+        <div class="info-row"><span class="info-icon">🚶</span><div><div class="info-label">Getting there from Kilburn</div><div class="info-val">${r.walk} · <a href="${r.mapUrl}" target="_blank" rel="noopener">📍 Map</a></div></div></div>
+        <div class="info-row"><span class="info-icon">📅</span><div><div class="info-label">Booking</div><div class="info-val">${r.booking}</div></div></div>
+        <div class="info-row"><span class="info-icon">🥗</span><div><div class="info-label">For vegetarians</div><div class="info-val">${r.vegNote}</div></div></div>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-tip" style="background:#EBF5EF;border-left-color:${r.stripe}"><strong>Tip:</strong> ${r.tip}</div>
+    </div>`;
+  el.querySelector('.card-collapse-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    el.classList.toggle('is-collapsed');
+  });
+  return el;
+}
+
+const resGrid = document.getElementById('res-grid');
+restaurants.forEach(r => resGrid.appendChild(buildRestaurantCard(r)));
+enableDragSort(resGrid);
 </script>
 </body>
 </html>
