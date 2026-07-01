@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>London · July 2026 — Family Trip Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --navy:#0B1D3E;--bg:#EDEBE4;--card:#FFFFFF;--text:#1A1714;
+      --muted:#6B6560;--border:#DDD9D0;
+      --c-everyone:#003688;--c-toddlers:#E07000;
+      --c-touristy:#C41E1E;--c-relaxed:#1A6B3A;--c-daytrip:#7B0048;
+    }
+    body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* HEADER */
+    .site-header{background:var(--navy);color:#fff;padding:52px 28px 44px;text-align:center;position:relative;overflow:hidden}
+    .site-header::before{content:'LONDON';position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-family:'Playfair Display',serif;font-size:clamp(64px,16vw,152px);font-weight:700;color:rgba(255,255,255,0.032);letter-spacing:.14em;pointer-events:none;white-space:nowrap;line-height:1}
+    .header-eyebrow{font-size:10px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#E05555;margin-bottom:16px}
+    .header-title{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5.5vw,4rem);font-weight:700;line-height:1;margin-bottom:6px}
+    .header-title em{font-style:italic;font-weight:400;color:rgba(255,255,255,.45)}
+    .header-sub{font-size:12px;color:rgba(255,255,255,.38);margin-bottom:6px;letter-spacing:.04em}
+    .header-base{font-size:11px;color:rgba(255,255,255,.28);margin-bottom:32px;letter-spacing:.04em}
+    .who-grid{display:inline-flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:28px}
+    .who-pill{display:flex;align-items:center;gap:7px;padding:7px 13px;border-radius:100px;border:1px solid rgba(255,255,255,.13);font-size:11px;color:rgba(255,255,255,.65)}
+    .who-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .timeline{display:inline-flex;border:1px solid rgba(255,255,255,.1);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+    .tl-item{padding:10px 18px;border-right:1px solid rgba(255,255,255,.1);text-align:center}
+    .tl-item:last-child{border-right:none}
+    .tl-date{display:block;font-size:13px;font-weight:600;color:#fff;margin-bottom:2px}
+    .tl-label{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.03em}
+
+    /* FILTER BARS */
+    .filter-bar{background:var(--navy);border-top:1px solid rgba(255,255,255,.07);position:sticky;top:0;z-index:50;padding:10px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+    .filter-bar::-webkit-scrollbar{display:none}
+    .f-btn{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:7px 14px 7px 9px;border-radius:100px;border:1px solid rgba(255,255,255,.14);background:transparent;color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+    .f-btn:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+    .f-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;opacity:.85}
+    .f-btn[data-f="all"] .f-dot{background:rgba(255,255,255,.45)}
+    .f-btn[data-f="everyone"] .f-dot{background:var(--c-everyone)}
+    .f-btn[data-f="toddlers"] .f-dot{background:var(--c-toddlers)}
+    .f-btn[data-f="touristy"] .f-dot{background:var(--c-touristy)}
+    .f-btn[data-f="relaxed"] .f-dot{background:var(--c-relaxed)}
+    .f-btn.active{color:#fff;border-color:transparent}
+    .f-btn.active .f-dot{background:rgba(255,255,255,.9);opacity:1}
+    .f-btn[data-f="all"].active{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25)}
+    .f-btn[data-f="everyone"].active{background:var(--c-everyone)}
+    .f-btn[data-f="toddlers"].active{background:var(--c-toddlers)}
+    .f-btn[data-f="touristy"].active{background:var(--c-touristy)}
+    .f-btn[data-f="relaxed"].active{background:var(--c-relaxed)}
+    .filter-bar2{background:#0e2247;border-top:1px solid rgba(255,255,255,.05);padding:8px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;align-items:center}
+    .filter-bar2::-webkit-scrollbar{display:none}
+    .filter-bar2 label{font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;flex-shrink:0;margin-right:4px}
+    .w-btn{flex-shrink:0;padding:5px 13px;border-radius:100px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.45);font-family:'DM Sans',sans-serif;font-size:11.5px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+    .w-btn:hover{color:#fff}
+    .w-btn.active{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.3)}
+
+    /* MAIN */
+    .main{max-width:1300px;margin:0 auto;padding:28px 18px 80px}
+    .count-bar{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:22px;letter-spacing:.03em}
+
+    /* SECTION HEADERS */
+    .section-head{display:flex;align-items:center;gap:16px;margin:0 0 20px}
+    .section-head + .section-head{margin-top:48px}
+    .section-title{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--text)}
+    .section-sub{font-size:12px;color:var(--muted);margin-top:3px}
+    .section-rule{flex:1;height:1px;background:var(--border)}
+    .section-badge{flex-shrink:0;padding:4px 12px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase}
+    .badge-london{background:#E8EDF6;color:var(--c-everyone)}
+    .badge-daytrip{background:#F0E8EE;color:var(--c-daytrip)}
+
+    .day-trip-section{margin-top:52px}
+    .day-trip-banner{background:var(--c-daytrip);color:#fff;border-radius:10px;padding:20px 24px;margin-bottom:24px;display:flex;align-items:center;gap:16px}
+    .day-trip-banner-icon{font-size:28px;flex-shrink:0}
+    .day-trip-banner-title{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:3px}
+    .day-trip-banner-sub{font-size:12px;color:rgba(255,255,255,.7);line-height:1.5}
+
+    /* GRID */
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    @media(max-width:980px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:560px){.grid{grid-template-columns:1fr;gap:12px}}
+
+    /* CARDS */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:transform .18s ease,box-shadow .18s ease}
+    .card:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(0,0,0,.09)}
+    .card.is-hidden{display:none}
+    .card-stripe{height:5px}
+    .card-header{padding:15px 16px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .card-title{font-family:'Playfair Display',serif;font-size:14.5px;font-weight:700;line-height:1.35;color:var(--text);flex:1}
+    .weather-badge{flex-shrink:0;font-size:17px;line-height:1;margin-top:1px}
+    .card-inner{padding:12px 16px 15px;flex:1;display:flex;flex-direction:column}
+    .card-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+    .chip{font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:3px 7px;border-radius:100px;line-height:1.5}
+    .chip-everyone{background:#E5ECF8;color:#003080}
+    .chip-toddlers{background:#FEF2E4;color:#B85A00}
+    .chip-touristy{background:#FDEAEA;color:#A51A1A}
+    .chip-relaxed{background:#E5F2EA;color:#155A30}
+    .chip-daytrip{background:#F2E5EF;color:#620040}
+
+    /* WEATHER ROW */
+    .weather-row{display:flex;align-items:flex-start;gap:7px;background:#F5F4F0;border-radius:6px;padding:7px 10px;margin-bottom:11px}
+    .weather-icon-sm{font-size:14px;flex-shrink:0;margin-top:1px}
+    .weather-text{font-size:11px;color:var(--muted);line-height:1.4}
+    .weather-text strong{color:var(--text);font-weight:600}
+
+    /* INFO ROWS */
+    .info-rows{flex:1;display:flex;flex-direction:column;gap:9px}
+    .info-row{display:grid;grid-template-columns:20px 1fr;gap:7px;align-items:start}
+    .info-icon{font-size:12px;line-height:1.6;text-align:center}
+    .info-label{font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:2px;line-height:1}
+    .info-val{font-size:12px;color:var(--text);line-height:1.5}
+    .info-val a{color:var(--c-everyone);text-decoration:none;font-weight:500}
+    .info-val a:hover{text-decoration:underline}
+
+    /* FOOD SECTION */
+    .food-block{display:flex;flex-direction:column;gap:5px}
+    .food-row{display:flex;gap:6px;align-items:flex-start}
+    .food-tag{flex-shrink:0;font-size:8.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;margin-top:1px;line-height:1.5}
+    .food-tag.sit-down{background:#E5ECF8;color:#003080}
+    .food-tag.casual{background:#FEF2E4;color:#B85A00}
+    .food-tag.veg{background:#E5F2EA;color:#155A30}
+    .food-val{font-size:12px;color:var(--text);line-height:1.5}
+
+    /* CONNECTIONS */
+    .connect-row{display:flex;gap:6px;align-items:flex-start;background:#F0F4FB;border-radius:6px;padding:7px 10px;margin-top:2px}
+    .connect-icon{font-size:13px;flex-shrink:0;margin-top:1px}
+    .connect-text{font-size:11px;color:#003080;line-height:1.45}
+    .connect-text strong{font-weight:600}
+
+    /* DIVIDER / CROWD / TIP */
+    .card-divider{height:1px;background:var(--border);margin:11px 0 10px}
+    .crowd-row{display:flex;align-items:flex-start;gap:7px;margin-bottom:9px}
+    .crowd-pip{display:flex;gap:2px;flex-shrink:0;margin-top:3px}
+    .pip{width:8px;height:8px;border-radius:50%;background:var(--border)}
+    .pip.on-low{background:#1A6B3A}
+    .pip.on-medium{background:#D07000}
+    .pip.on-high{background:#C41E1E}
+    .crowd-label{font-size:11px;color:var(--muted);line-height:1.45}
+    .crowd-label strong{color:var(--text);font-weight:600}
+    .card-tip{font-size:11px;line-height:1.5;color:var(--muted);padding:7px 9px;border-radius:5px;background:var(--bg);border-left:3px solid transparent}
+    .card-tip strong{color:var(--text)}
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <p class="header-eyebrow">Family Trip Planner · NW6</p>
+  <h1 class="header-title">London<br><em>July 2026</em></h1>
+  <p class="header-sub">6–7 Adults · 2 Toddlers aged 3½</p>
+  <p class="header-base">Base: Kilburn High Road · NW6</p>
+  <div class="who-grid">
+    <div class="who-pill"><span class="who-dot" style="background:#C41E1E"></span>4 adults over 65 — sightseeing</div>
+    <div class="who-pill"><span class="who-dot" style="background:#1A6B3A"></span>3 adults — relaxed</div>
+    <div class="who-pill"><span class="who-dot" style="background:#E07000"></span>2 toddlers aged 3½</div>
+    <div class="who-pill"><span class="who-dot" style="background:#7B0048"></span>London local — weekends + Mon &amp; Fri</div>
+  </div>
+  <div class="timeline">
+    <div class="tl-item"><span class="tl-date">1 Jul</span><span class="tl-label">4 adults arrive</span></div>
+    <div class="tl-item"><span class="tl-date">3 Jul</span><span class="tl-label">Full group</span></div>
+    <div class="tl-item"><span class="tl-date">10 Jul</span><span class="tl-label">2 adults depart</span></div>
+    <div class="tl-item"><span class="tl-date">13 Jul</span><span class="tl-label">All depart</span></div>
+  </div>
+</header>
+
+<nav class="filter-bar" aria-label="Filter by group">
+  <button class="f-btn active" data-f="all"><span class="f-dot"></span>All options</button>
+  <button class="f-btn" data-f="everyone"><span class="f-dot"></span>Good for everyone</button>
+  <button class="f-btn" data-f="toddlers"><span class="f-dot"></span>Toddler-friendly</button>
+  <button class="f-btn" data-f="touristy"><span class="f-dot"></span>Sightseeing</button>
+  <button class="f-btn" data-f="relaxed"><span class="f-dot"></span>Relaxed &amp; chilled</button>
+</nav>
+<div class="filter-bar2" role="group" aria-label="Filter by weather">
+  <label>Weather:</label>
+  <button class="w-btn active" data-w="all">Any day</button>
+  <button class="w-btn" data-w="sun">☀️ Sunny days</button>
+  <button class="w-btn" data-w="rain">🌧️ Rainy days</button>
+  <button class="w-btn" data-w="either">⛅ Either</button>
+</div>
+
+<main class="main">
+  <p class="count-bar" id="count-bar"></p>
+
+  <!-- LONDON ACTIVITIES -->
+  <div class="section-head">
+    <div>
+      <div class="section-title">London Activities</div>
+      <div class="section-sub">All based in the city — from Kilburn</div>
+    </div>
+    <div class="section-rule"></div>
+    <span class="section-badge badge-london">In the city</span>
+  </div>
+  <div class="grid" id="london-grid"></div>
+
+  <!-- DAY TRIPS -->
+  <section class="day-trip-section" id="daytrip-section">
+    <div class="day-trip-banner">
+      <div class="day-trip-banner-icon">🚆</div>
+      <div>
+        <div class="day-trip-banner-title">Day Trips from London</div>
+        <div class="day-trip-banner-sub">All reachable by train from Paddington, Waterloo, or King's Cross · Kilburn is well connected to all three via the Jubilee or Bakerloo line</div>
+      </div>
+    </div>
+    <div class="grid" id="daytrip-grid"></div>
+  </section>
+</main>
+
+<script>
+const GROUPS={everyone:'Everyone',toddlers:'Toddlers',touristy:'Sightseeing',relaxed:'Relaxed',daytrip:'Day Trip'};
+const CHIP_CLS={everyone:'chip-everyone',toddlers:'chip-toddlers',touristy:'chip-touristy',relaxed:'chip-relaxed',daytrip:'chip-daytrip'};
+const STRIPE={everyone:'#003688',toddlers:'#E07000',touristy:'#C41E1E',relaxed:'#1A6B3A',daytrip:'#7B0048'};
+const TIP_BG={everyone:'#EEF2FA',toddlers:'#FEF4E6',touristy:'#FDF0F0',relaxed:'#EBF5EF',daytrip:'#F5EAF3'};
+const CROWD_PIPS={low:[true,false,false],medium:[true,true,false],high:[true,true,true]};
+
+// food: array of {type:'sit-down'|'casual'|'veg', text}
+// connection: text describing a natural pairing with another activity
+
+const london = [
+  {
+    title:"Hampstead Heath — Paddling Pool & Playground",
+    tags:["everyone","toddlers","relaxed"],primary:"toddlers",
+    weather:"sun",weatherNote:"<strong>Best on sunny days</strong> — pool is open 10:30am–5pm and may close in cold or wet weather. Lawns need dry conditions for a picnic.",
+    highlights:"Toddler paddling pool open 10:30am–5pm; Parliament Hill Playground (Nassington Rd NW3 2TX); under-5s zone; Parliament Hill panoramic skyline view; vast open lawns",
+    duration:"3–4 hours",walking:"Low — 0.5–1 mile, flat",
+    getting:'Bus C11 from Kilburn High Road direct to the Heath (~20 min); or Overground to Hampstead Heath station from Kilburn High Road (~20 min). <a href="https://www.google.com/maps/search/?api=1&query=Parliament+Hill+Playground+Nassington+Road+London+NW3+2TX" target="_blank" rel="noopener">📍 Parliament Hill Playground</a>',
+    food:[
+      {type:'sit-down',text:'Parliament Hill Café — on-site, highchairs, good hot food and cakes'},
+      {type:'sit-down',text:'Jack Straw\'s Castle pub — 10 min walk, good pub lunch'},
+      {type:'casual',text:'Bring a picnic — the lawns are perfect for it; Sainsbury\'s on Kilburn High Rd before you go'},
+      {type:'veg',text:'Parliament Hill Café has good vegetarian options including veggie soups and sandwiches'}
+    ],
+    connection:null,
+    crowd:"medium",crowdNote:"<strong>Busy on hot days</strong> — arrive before 11am on a sunny weekday. Weekends in good weather get very busy by midday.",
+    tip:"Bring a full change of clothes and a towel for both toddlers — keeping them out of the water is not possible and shouldn't be attempted."
+  },
+  {
+    title:"Golders Hill Park — Free Zoo & Picnic Lawns",
+    tags:["everyone","toddlers","relaxed"],primary:"toddlers",
+    weather:"either",weatherNote:"<strong>Works in most weather</strong> — zoo enclosures give shelter; café has a covered terrace. Best in sunshine for the picnic lawns.",
+    highlights:"Free zoo: ring-tailed lemurs, flamingos, wallabies, walk-alongside deer; large sandpit playground; flat picnic lawns",
+    duration:"3–4 hours",walking:"Low — flat, 0.5–1 mile",
+    getting:'Bus 268 from Kilburn to Golders Green (~20 min), then walk into the park from West Heath Avenue. <a href="https://www.google.com/maps/search/?api=1&query=Golders+Hill+Park+West+Heath+Avenue+London+NW11" target="_blank" rel="noopener">📍 Golders Hill Park</a>',
+    food:[
+      {type:'sit-down',text:'Golders Hill Park Café — terrace with highchairs, proper hot meals and ice cream'},
+      {type:'casual',text:'Golders Green Road: excellent range of street food, delis, and takeaway 10 min walk'},
+      {type:'veg',text:'Golders Green has one of London\'s best concentrations of vegetarian and vegan food — Jewish deli, Middle Eastern, and dedicated vegetarian restaurants all on the same road'}
+    ],
+    connection:"Combine in the same afternoon with the Hill Garden & Pergola — a 10-min walk through the north end of the park. Also close to Parliament Hill and Kenwood House (same general area).",
+    crowd:"low",crowdNote:"<strong>Consistently quiet</strong> — one of the advantages over larger parks. Even summer weekends are manageable here.",
+    tip:"The Butterfly House has been closed since 2020 — don't build the visit around it. The Hill Garden & Pergola entrance on West Heath Road is easy to miss; look for a wooden gate."
+  },
+  {
+    title:"Parliament Hill + Kenwood House",
+    tags:["everyone","touristy","relaxed"],primary:"everyone",
+    weather:"sun",weatherNote:"<strong>Best in sunshine</strong> for the panoramic views. Kenwood House itself is a free indoor backup if the weather turns.",
+    highlights:"Parliament Hill Playground (Nassington Rd NW3 2TX); one of London's best panoramic skyline views; Kenwood House — free, Rembrandt &amp; Vermeer inside; sweeping lawns to a lake",
+    duration:"3–5 hours",walking:"Moderate — ~1.5–2 miles including gentle hill climb",
+    getting:'Bus C11 from Kilburn High Road (~20 min). <a href="https://www.google.com/maps/search/?api=1&query=Parliament+Hill+London+NW3" target="_blank" rel="noopener">📍 Parliament Hill</a> · <a href="https://www.google.com/maps/search/?api=1&query=Kenwood+House+Hampstead+Lane+London+NW3+7JR" target="_blank" rel="noopener">📍 Kenwood House</a>',
+    food:[
+      {type:'sit-down',text:'Kenwood Brew House — beautiful terrace with lake views, full lunch menu, table service'},
+      {type:'sit-down',text:'The Bull & Last — 10 min walk, one of North London\'s best pub kitchens'},
+      {type:'casual',text:'Parliament Hill Lido Café — casual terrace, good for a quick bite after the playground'},
+      {type:'veg',text:'Kenwood Brew House has a strong vegetarian section on the menu'}
+    ],
+    connection:"Naturally extends into a Golders Hill Park afternoon — continue from Kenwood west through the heath to the zoo (about 25 min walk). Or combine with Parliament Hill Playground as a double hit on the same day.",
+    crowd:"medium",crowdNote:"<strong>Parliament Hill busy on sunny weekends</strong> — Kenwood House is reliably quieter.",
+    tip:"Do the playground first for the toddlers, then walk 15 min through the heath to Kenwood. The open Kenwood lawns let the toddlers run while adults look inside."
+  },
+  {
+    title:"Regent's Canal Walk — Little Venice to Camden",
+    tags:["everyone","relaxed"],primary:"relaxed",
+    weather:"sun",weatherNote:"<strong>Best in sunshine</strong> — the towpath is exposed with little shade. Light drizzle is manageable; avoid in heavy rain.",
+    highlights:"Flat, stroller-perfect towpath; colourful narrowboats and café boats at Little Venice; free views into London Zoo's aviary; ends at Camden Lock food market",
+    duration:"2–3 hours total (the walk itself about 60 min at an easy pace with stops)",walking:"Moderate — 2 miles, completely flat",
+    getting:'Bakerloo to Warwick Avenue (~6 min from Kilburn); start from Blomfield Road bridge. <a href="https://www.google.com/maps/search/?api=1&query=Little+Venice+Blomfield+Road+London+W9" target="_blank" rel="noopener">📍 Little Venice start point</a>',
+    food:[
+      {type:'casual',text:'Camden Market food stalls at the finish — Ethiopian, Jamaican, Japanese, Caribbean, halal BBQ, crêpes. Huge variety for a mixed group'},
+      {type:'sit-down',text:'The Waterway pub at Little Venice — good for a pre-walk drink and light lunch on the terrace'},
+      {type:'casual',text:'Café boats moored at Little Venice — good coffee and pastries before you set off'},
+      {type:'veg',text:'Camden Market has outstanding vegetarian and vegan stalls — dedicated falafel, Ethiopian injera, and several fully plant-based vendors'}
+    ],
+    connection:"Start at Little Venice (Bakerloo to Warwick Avenue, 6 min from Kilburn) — worth 20 min there before walking to Camden. Natural end point is Camden Market for lunch, then a short walk or bus to Regent's Park or London Zoo.",
+    crowd:"medium",crowdNote:"<strong>Towpath quiet on weekday mornings</strong>; Camden Market end very busy after noon on weekends.",
+    tip:"On sunny Sundays the towpath gets busy after noon. Going before 10am is much more pleasant. The path is pushchair-friendly the entire way — no steps."
+  },
+  {
+    title:"London Transport Museum",
+    tags:["toddlers","everyone"],primary:"toddlers",
+    weather:"rain",weatherNote:"<strong>Perfect rainy day option</strong> — fully indoor, air-conditioned, one of the best wet-day half-days for toddlers in London.",
+    highlights:"Interactive bus and Tube driving simulators; historic vehicles to climb aboard; 'All Aboard' under-5s gallery; brilliant for 3.5-year-olds who love anything with wheels",
+    duration:"2–3 hours",walking:"Minimal — fully indoor, flat, stroller-friendly",
+    getting:'Bakerloo to Charing Cross (~15 min from Kilburn), 5 min walk to Covent Garden Piazza; or Jubilee to Waterloo, 10 min walk. <a href="https://www.google.com/maps/search/?api=1&query=London+Transport+Museum+Covent+Garden+Piazza+WC2E+7BB" target="_blank" rel="noopener">📍 Transport Museum</a>',
+    food:[
+      {type:'sit-down',text:'Dishoom Covent Garden — excellent sit-down Indian, good for a group, but book ahead'},
+      {type:'casual',text:'Covent Garden Piazza — dozens of options at every price point surrounding the museum'},
+      {type:'casual',text:'Neal\'s Yard — independent cafés and lunch spots 5 min walk, more relaxed than the piazza'},
+      {type:'veg',text:'Dishoom has excellent vegetarian options throughout the menu. Malabar Café in Neal\'s Yard is fully vegetarian'}
+    ],
+    connection:"Covent Garden is a natural hub — easy to combine with a South Bank afternoon (10 min walk via the Strand to Waterloo Bridge). Or end the day at Somerset House if the kids have energy left.",
+    crowd:"medium",crowdNote:"<strong>Busier on rainy days</strong> — everyone has the same idea. Book tickets online to skip any queue. Weekday mornings are the calmest.",
+    tip:"Book tickets online — slightly cheaper and avoids queuing. An annual family membership pays back in one visit; the toddlers will almost certainly want to return."
+  },
+  {
+    title:"Natural History Museum",
+    tags:["toddlers","everyone"],primary:"toddlers",
+    weather:"rain",weatherNote:"<strong>Excellent rainy day</strong> — free, indoor, enormous. Could fill an entire wet day comfortably.",
+    highlights:"Free entry; T-Rex animatronic; 25-metre blue whale skeleton; Earth galleries with rotating globe escalator; family trails; stroller-accessible throughout",
+    duration:"2–4 hours",walking:"Low to moderate — large indoor space, all flat",
+    getting:'Bakerloo to Oxford Circus then Central line to South Kensington (~30 min); or Jubilee to Green Park then Piccadilly line. <a href="https://www.google.com/maps/search/?api=1&query=Natural+History+Museum+Cromwell+Road+London+SW7+5BD" target="_blank" rel="noopener">📍 Natural History Museum</a>',
+    food:[
+      {type:'sit-down',text:'V&A Café (next door) — stunning interior, excellent lunch menu, one of London\'s best museum cafés'},
+      {type:'casual',text:'Hyde Park — 5 min walk for a picnic on the grass if the weather clears'},
+      {type:'casual',text:'Museum\'s own café — functional, good for a quick break mid-visit'},
+      {type:'veg',text:'V&A Café has a strong vegetarian menu; the café at Hyde Park\'s The Serpentine also has good plant-based options'}
+    ],
+    connection:"The V&A Museum is directly next door — free entry, extraordinary design and art collections, and a world-class café. The Science Museum is also next door and has free interactive galleries for kids. Easy to make a full South Kensington museum day of it.",
+    crowd:"high",crowdNote:"<strong>Very busy in summer</strong>, especially the dinosaur hall. Weekday mornings before 10:30am are the best window.",
+    tip:"Go on a weekday morning. The Earth galleries are consistently less crowded than the dinosaur hall and are arguably more spectacular for adults."
+  },
+  {
+    title:"Museum of London Docklands + Thames Clipper",
+    tags:["toddlers","everyone"],primary:"toddlers",
+    weather:"rain",weatherNote:"<strong>Good in any weather</strong> — museum is fully indoor; Thames Clipper has a covered lower deck. Upper deck Tower Bridge views are best in sunshine.",
+    highlights:"Mudlarks children's gallery — soft play, water tables, interactive exhibits for under-8s; Thames Clipper passes Tower Bridge and the full City skyline; under-5s travel free on the Clipper",
+    duration:"3–4 hours at the museum; ~40 min each way on the Clipper",walking:"Minimal at the museum — flat and indoor; boat journey is seated",
+    getting:'Thames Clipper from Embankment Pier to West India Quay (~40 min). From Kilburn: Jubilee to Waterloo, 10 min walk to Embankment Pier. <a href="https://www.google.com/maps/search/?api=1&query=Embankment+Pier+Victoria+Embankment+London+WC2N+6NS" target="_blank" rel="noopener">📍 Embankment Pier</a> · <a href="https://www.google.com/maps/search/?api=1&query=Museum+of+London+Docklands+West+India+Quay+E14+4AL" target="_blank" rel="noopener">📍 Museum of London Docklands</a>',
+    food:[
+      {type:'sit-down',text:'Wahaca Canary Wharf — Mexican, good for groups, 10 min walk from the museum'},
+      {type:'casual',text:'West India Quay complex — several casual restaurants right outside the museum entrance'},
+      {type:'casual',text:'Grab lunch on the Thames Clipper terrace café before you arrive — relaxed and with great views'},
+      {type:'veg',text:'Wahaca has extensive vegetarian and vegan options. Comptoir Libanais in Canary Wharf is also strongly vegetarian-friendly'}
+    ],
+    connection:"<strong>Best connection in the itinerary:</strong> take the Thames Clipper from Embankment Pier (~£6 adult, under-5s free). The journey passes under Tower Bridge and along the full City skyline — sightseeing built into the transport. On the same day, the older adults can visit the Tower of London or take the full river sightseeing cruise while the toddler group does Mudlarks — meet up for lunch at West India Quay afterward.",
+    crowd:"low",crowdNote:"<strong>Much less crowded</strong> than the NHM or Science Museum. Mudlarks timed entry does sell out on weekends — book in advance.",
+    tip:"Book Mudlarks timed entry online in advance. Sit on the Clipper upper deck for Tower Bridge views — go up as soon as you board."
+  },
+  {
+    title:"ZSL London Zoo + Regent's Park",
+    tags:["toddlers","everyone"],primary:"toddlers",
+    weather:"either",weatherNote:"<strong>Works in most weather</strong> — several indoor enclosures (gorillas, reptiles, aquarium). Outdoor animals are less active in heavy rain.",
+    highlights:"Gorillas, giraffes, tigers, penguins; Children's Zoo with hands-on animal contact; Penguin Beach daily feeding; Regent's Park for a picnic or boating lake after",
+    duration:"4–5 hours (solid half-day at the zoo minimum)",walking:"Moderate — zoo ~1–1.5 miles; Regent's Park additional but flat",
+    getting:'Bakerloo to Baker Street (~8 min from Kilburn), then bus 274 to zoo gates; or Jubilee to St John\'s Wood then 10 min walk. <a href="https://www.google.com/maps/search/?api=1&query=ZSL+London+Zoo+Outer+Circle+Regent%27s+Park+NW1+4RY" target="_blank" rel="noopener">📍 London Zoo</a>',
+    food:[
+      {type:'sit-down',text:'The Honest Sausage — pleasant kiosk inside Regent\'s Park, good for a relaxed post-zoo lunch on the grass'},
+      {type:'casual',text:'Multiple cafés and kiosks inside the zoo — convenient but pricey; consider eating after in the park'},
+      {type:'sit-down',text:'The Cow pub (Westbourne Park Road) — 15 min, excellent kitchen, worth booking ahead for dinner'},
+      {type:'veg',text:'Regent\'s Park Café has good vegetarian options. The Cow has strong vegetarian mains on the menu'}
+    ],
+    connection:"Regent's Park is immediately south of the zoo — a natural extension for a picnic or the boating lake (hire a pedalo). The canal walk from Little Venice passes the zoo's northern aviary, so you can see the birds from the towpath for free.",
+    crowd:"high",crowdNote:"<strong>Very busy on summer weekends</strong>. Weekday mornings are significantly quieter and much more enjoyable with toddlers.",
+    tip:"Book online — cheaper and skips the ticket queue. Check the feeding schedule at the entrance. Penguin Beach daily feeding is a genuine toddler highlight."
+  },
+  {
+    title:"Granary Square Fountains + Coal Drops Yard",
+    tags:["toddlers","everyone","relaxed"],primary:"toddlers",
+    weather:"sun",weatherNote:"<strong>Best on sunny days</strong> — the fountains are the point. In rain, Coal Drops Yard has covered shopping and restaurants, but the toddler magic evaporates.",
+    highlights:"1,080 interactive choreographed fountains — toddlers run in and refuse to leave; Coal Drops Yard boutique shops and restaurants; canalside tables where adults can sit and watch",
+    duration:"2–3 hours",walking:"Minimal — compact and flat",
+    getting:'Jubilee to King\'s Cross/St Pancras (~6 min from Kilburn); 10 min walk through the development behind the station. <a href="https://www.google.com/maps/search/?api=1&query=Granary+Square+King%27s+Cross+London+N1C+4PQ" target="_blank" rel="noopener">📍 Granary Square</a>',
+    food:[
+      {type:'sit-down',text:'Dishoom King\'s Cross — excellent Indian, very popular, book ahead or join at 5:30pm'},
+      {type:'sit-down',text:'Barrafina Coal Drops Yard — outstanding tapas, no bookings taken, arrive early'},
+      {type:'casual',text:'Caravan King\'s Cross — excellent all-day brunch with canalside seating, good for the whole group'},
+      {type:'veg',text:'Dishoom has outstanding vegetarian dishes (the house black dal is legendary). Caravan has a strong vegetarian brunch menu'}
+    ],
+    connection:"King's Cross is a major transport hub — from here you can continue to Cambridge by train (50 min) if doing a spontaneous day trip. Also easy to walk along the canal to Islington and Angel afterward.",
+    crowd:"medium",crowdNote:"<strong>Quiet before 11am</strong>, busy at lunchtime. Weekday mornings are the sweet spot for toddlers — plenty of space around the fountains.",
+    tip:"Bring a full change of clothes and a towel — keeping toddlers out of the fountains is not possible."
+  },
+  {
+    title:"Kew Gardens",
+    tags:["everyone","relaxed"],primary:"relaxed",
+    weather:"either",weatherNote:"<strong>Good in most weather</strong> — the enormous Palm House and Temperate House glasshouses are ideal if it rains. Sunshine makes the sculpture walk magical.",
+    highlights:"Henry Moore: Monumental Nature — 30 sculptures across the grounds (free with entry, to Jan 2027); Treehouse Towers climbing structure; Palm House &amp; Temperate House glasshouses; buggy hire on-site",
+    duration:"Full day — 5–6 hours for the highlights",walking:"Moderate to high — 2–4 miles; hire an Explorer Buggy on-site if needed",
+    getting:'Bakerloo to Baker Street then District line to Kew Gardens (~55 min); or Overground from Kilburn High Road to Gunnersbury then District line. <a href="https://www.google.com/maps/search/?api=1&query=Royal+Botanic+Gardens+Kew+Richmond+TW9+3AE" target="_blank" rel="noopener">📍 Kew Gardens</a>',
+    food:[
+      {type:'sit-down',text:'The Orangery — elegant restaurant inside the palace orangery, excellent set lunch, book ahead'},
+      {type:'sit-down',text:'Pavilion Bar & Grill by the lake — relaxed terrace, good for a large group, no booking needed'},
+      {type:'casual',text:'Kew Gardens Café at the Victoria Gate entrance — quick bites and good coffee on arrival'},
+      {type:'veg',text:'The Orangery has a strong vegetarian menu. The Pavilion Bar & Grill always has good vegetarian options including salads and plant-based mains'}
+    ],
+    connection:"Hampton Court Palace is on the same District line, about 20 min further. The two can be loosely combined if you do Kew in the morning and Hampton Court in the afternoon — though each is really a full day on its own. Richmond Park is also a 15 min walk from Kew Gardens for a relaxed afternoon deer-spotting.",
+    crowd:"high",crowdNote:"<strong>Very popular in summer</strong> — Kew can close the gate at capacity on busy sunny days. Book tickets online in advance. Weekdays are noticeably calmer.",
+    tip:"Turn the Moore sculpture visit into a treasure hunt for the toddlers using the map at the entrance. Book tickets in advance."
+  },
+  {
+    title:"Diana Memorial Playground + Hyde Park",
+    tags:["toddlers","everyone","relaxed"],primary:"toddlers",
+    weather:"sun",weatherNote:"<strong>Best in sunshine</strong> — the playground and Italian Gardens are outdoor. Hyde Park lawns for a picnic need dry conditions.",
+    highlights:"Peter Pan-themed wooden pirate ship playground; huge sandpit; Italian Gardens fountains; Hyde Park for a picnic; Serpentine lake and Lido Café 10 min walk",
+    duration:"2–4 hours",walking:"Low to moderate — playground is flat",
+    getting:'Central line to Queensway (~25 min from Kilburn via Bakerloo to Baker St); or Bakerloo to Paddington then 20 min walk. <a href="https://www.google.com/maps/search/?api=1&query=Diana+Princess+of+Wales+Memorial+Playground+Kensington+Gardens+W2+4RU" target="_blank" rel="noopener">📍 Diana Memorial Playground</a>',
+    food:[
+      {type:'sit-down',text:'Serpentine Bar & Kitchen — lakeside setting, good brunch and lunch menu'},
+      {type:'casual',text:'Hyde Park kiosks — scattered throughout the park, good for ice cream and snacks mid-visit'},
+      {type:'casual',text:'Italian Garden café — small, pleasant, right next to the fountains'},
+      {type:'veg',text:'Serpentine Bar & Kitchen has good vegetarian options. The Natural Kitchen on Marylebone High Street (15 min walk) is strongly vegetarian-focused'}
+    ],
+    connection:"The Natural History Museum and V&A are a 20 min walk through Kensington Gardens — easy to combine if the weather turns and you need an indoor option. South Kensington tube is 15 min on foot from the playground.",
+    crowd:"high",crowdNote:"<strong>Very busy in summer</strong> — playground is capped by a ranger. Arrive before 10am or after 3pm on weekends. Weekdays are far easier.",
+    tip:"Free but has a capacity limit — arrive before 10am on weekends. A ranger occasionally runs a free story session inside; check the noticeboard at the gate."
+  },
+  {
+    title:"South Bank — Borough Market + Tate Modern",
+    tags:["relaxed","everyone"],primary:"relaxed",
+    weather:"either",weatherNote:"<strong>Good in either weather</strong> — Borough Market is partly covered; Tate Modern is fully indoor. The riverside walk is best in sunshine.",
+    highlights:"Borough Market — artisan food, Monmouth Coffee, the legendary Kappacasein cheese toastie; Tate Modern free; Millennium Bridge walk with St Paul's views; flat riverside path for pushchair",
+    duration:"3–5 hours (easily a full day)",walking:"Moderate — 1–2 miles flat riverside",
+    getting:'Jubilee to Southwark (~20 min from Kilburn); or Jubilee to London Bridge then 5 min walk to Borough Market. <a href="https://www.google.com/maps/search/?api=1&query=Borough+Market+Stoney+Street+London+SE1+1TL" target="_blank" rel="noopener">📍 Borough Market</a> · <a href="https://www.google.com/maps/search/?api=1&query=Tate+Modern+Bankside+London+SE1+9TG" target="_blank" rel="noopener">📍 Tate Modern</a>',
+    food:[
+      {type:'casual',text:'Borough Market stalls — arrive hungry, graze across multiple vendors; the cheese toastie from Kappacasein is unmissable'},
+      {type:'sit-down',text:'Roast restaurant — upstairs in the market, proper sit-down lunch with views over the stalls below; book ahead'},
+      {type:'casual',text:'South Bank street food vendors — further along the riverside toward the London Eye'},
+      {type:'veg',text:'Borough Market is exceptionally vegetarian-friendly — dedicated veggie stalls throughout including Kappacasein (cheese-based), artisan bread, and several fully plant-based vendors. Neal\'s Yard Dairy is unmissable for cheese lovers'}
+    ],
+    connection:"Natural pairing with Greenwich by Thames Clipper — take the Clipper from London Bridge City Pier (5 min walk from Borough Market) to Greenwich, or come back via river. Shakespeare's Globe Theatre is a 5 min walk from Tate Modern if anyone wants a tour.",
+    crowd:"high",crowdNote:"<strong>Borough Market heaving on Saturdays</strong> — Thursday and Friday mornings are the sweet spot. Tate Modern less crowded on weekday afternoons.",
+    tip:"Full trading days are Wed–Sat. Thursday/Friday mornings are ideal. Market traders are consistently generous with samples for small children."
+  },
+  {
+    title:"Greenwich — Cutty Sark + Observatory + Market",
+    tags:["touristy","everyone"],primary:"touristy",
+    weather:"either",weatherNote:"<strong>Best in sunshine</strong> for the hilltop views and riverside walk. Cutty Sark and the Observatory have substantial indoor sections for changeable weather.",
+    highlights:"Cutty Sark — last Victorian tea clipper; Royal Observatory and the Prime Meridian line; panoramic London skyline views; Greenwich Market covered food hall; National Maritime Museum free",
+    duration:"4–5 hours",walking:"Moderate — mostly flat; one steeper climb to the Observatory",
+    getting:'DLR from Bank to Cutty Sark (~40 min via Jubilee to Canary Wharf); or Thames Clipper from Embankment Pier (~55 min — worth it for the river journey). <a href="https://www.google.com/maps/search/?api=1&query=Cutty+Sark+King+William+Walk+London+SE10+9HT" target="_blank" rel="noopener">📍 Cutty Sark</a> · <a href="https://www.google.com/maps/search/?api=1&query=Greenwich+Market+SE10+9HZ" target="_blank" rel="noopener">📍 Greenwich Market</a>',
+    food:[
+      {type:'casual',text:'Greenwich Market — covered artisan food hall with wide variety: Thai, Japanese, Ethiopian, pizza, crêpes'},
+      {type:'sit-down',text:'The Trafalgar Tavern — historic riverside pub, great for a long lunch with river views'},
+      {type:'casual',text:'Goddards at Greenwich — pie and mash, trading since 1890, a London institution'},
+      {type:'veg',text:'Greenwich Market has several vegetarian and vegan vendors. The Pea Pod food stall (often in the market) is fully plant-based'}
+    ],
+    connection:"<strong>Strong pairing with the Thames Clipper:</strong> take the Clipper from Embankment one way and the DLR back — you get the full river experience without doubling up. Can be combined on the same day as a morning at the Museum of London Docklands (same DLR line), making a full Docklands day.",
+    crowd:"medium",crowdNote:"<strong>Busier on weekends</strong> but much less hectic than central London. Greenwich Market is liveliest on weekends — a plus here.",
+    tip:"Take the Thames Clipper one way and DLR the other. Under-5s travel free on the Clipper."
+  },
+  {
+    title:"Hop-On Hop-Off Bus Tour",
+    tags:["touristy"],primary:"touristy",
+    weather:"sun",weatherNote:"<strong>Much better in sunshine</strong> — the open top deck in rain is genuinely unpleasant. The covered lower deck is fallback but loses most of the appeal.",
+    highlights:"Westminster, Buckingham Palace, Tower of London, St Paul's, Trafalgar Square, Piccadilly — all headline sights with minimal walking; live commentary on the top deck",
+    duration:"Full loop ~2 hours; all day if hopping off at attractions",walking:"Minimal — seated sightseeing",
+    getting:'Pick up at Baker Street or Marble Arch — Bakerloo to Marble Arch (~10 min from Kilburn). Big Bus Tours and Evan Evans are the main reliable operators. <a href="https://www.google.com/maps/search/?api=1&query=Marble+Arch+London+W1H+7EJ" target="_blank" rel="noopener">📍 Marble Arch stop</a>',
+    food:[
+      {type:'sit-down',text:'Hop off at Covent Garden — dozens of options around the piazza from all cuisines'},
+      {type:'sit-down',text:'Hop off near St Paul\'s for The Ned hotel restaurants — impressive grand setting in a former bank'},
+      {type:'casual',text:'South Bank street food if hopping off near the London Eye — relaxed riverside eating'},
+      {type:'veg',text:'Mildreds (Soho) is one of London\'s best vegetarian restaurants and is close to the bus route. Dishoom Covent Garden also has excellent vegetarian options'}
+    ],
+    connection:"Ideal split-group day: older adults take the Hop-On Hop-Off bus while the toddler group does Hampstead Heath or Golders Hill — parallel days that reconvene for dinner. Can also be combined with the Tower of London on the same day by hopping off at Tower Hill.",
+    crowd:"high",crowdNote:"<strong>Top deck fills fast on sunny days</strong> — board a stop or two before the popular pick-up points to claim front seats.",
+    tip:"Front seats on the top deck are the best in the house — board early. Works perfectly as a self-contained day for the 4 older adults."
+  },
+  {
+    title:"Thames Sightseeing Cruise",
+    tags:["touristy","everyone"],primary:"touristy",
+    weather:"either",weatherNote:"<strong>Works in any weather</strong> — the boat is covered with large windows. Views are clearer on bright days; light drizzle can be atmospheric.",
+    highlights:"Narrated cruise past the London Eye, Globe, Tower Bridge, HMS Belfast; relaxed sit-down sightseeing; onboard bar; baby-changing facilities",
+    duration:"1–1.5 hours one-way (Westminster to Tower); 2.5 hours to Greenwich",walking:"Minimal — almost entirely seated",
+    getting:'Westminster Pier — Jubilee to Westminster (~15 min from Kilburn). City Cruises and Thames River Sightseeing run regular timed departures. <a href="https://www.google.com/maps/search/?api=1&query=Westminster+Pier+Victoria+Embankment+London+SW1A+2JH" target="_blank" rel="noopener">📍 Westminster Pier</a>',
+    food:[
+      {type:'casual',text:'Onboard bar — light snacks and drinks during the cruise'},
+      {type:'sit-down',text:'St Katharine Docks (disembark at Tower Bridge) — pleasant marina restaurants with waterside tables'},
+      {type:'casual',text:'Greenwich Market if taking the full cruise to Greenwich — varied artisan food stalls'},
+      {type:'veg',text:'St Katharine Docks has several restaurants with good vegetarian options. Ping Pong dim sum (near Tower Hill) is strongly vegetarian-friendly'}
+    ],
+    connection:"<strong>vs Thames Clipper:</strong> if the destination is the Museum of London Docklands, take the Thames Clipper — faster, cheaper (~£6 adult vs ~£20), and under-5s travel free. Save the sightseeing cruise for a dedicated leisurely outing where the narrated journey IS the activity, not just the transport.",
+    crowd:"medium",crowdNote:"<strong>Book in advance in summer</strong> — popular times sell out. Early morning and late afternoon departures are quieter.",
+    tip:"A City Cruises family ticket (2 adults + 3 children) hop-on-hop-off day pass is around £48. The Thames Clipper is faster and cheaper for actual transport — the sightseeing cruise earns its price for the commentary and pace."
+  },
+  {
+    title:"London Eye",
+    tags:["touristy","everyone"],primary:"touristy",
+    weather:"sun",weatherNote:"<strong>Best on clear sunny days</strong> — visibility can stretch to Windsor Castle. In cloud or rain the views are much reduced and the ticket price harder to justify.",
+    highlights:"360° views across the London skyline; 30-minute slow rotation in a glass capsule; spectacular at dusk; under-4s travel free",
+    duration:"1–1.5 hours including queue and boarding",walking:"Minimal",
+    getting:'Jubilee to Waterloo (~15 min from Kilburn); 5 min walk along the South Bank. <a href="https://www.google.com/maps/search/?api=1&query=London+Eye+South+Bank+London+SE1+7PB" target="_blank" rel="noopener">📍 London Eye</a>',
+    food:[
+      {type:'sit-down',text:'Gillray\'s Steakhouse at County Hall — directly next door, excellent for a special occasion dinner'},
+      {type:'sit-down',text:'Côte Brasserie at County Hall — good French bistro, reliable and well-priced for a group'},
+      {type:'casual',text:'South Bank street food stalls — in both directions along the riverside from the Eye'},
+      {type:'veg',text:'Wahaca South Bank (Mexican) has strong vegetarian options. Flat Iron Square nearby has several vegetarian-friendly street food vendors'}
+    ],
+    connection:"Pairs well with a South Bank walk toward Borough Market (20 min flat riverside walk) or toward Tate Modern and the Millennium Bridge. Can also be combined with a Thames Sightseeing Cruise on the same afternoon — walk from Westminster Pier to the Eye.",
+    crowd:"high",crowdNote:"<strong>Extremely busy in July</strong> — pre-booking a timed entry slot is essential. Without it expect 45–90 min queuing.",
+    tip:"Pre-book online — cheaper and saves significant queuing. Check the weather forecast before committing. The Fast Track option is worth the extra cost in July."
+  },
+  {
+    title:"Tower of London + Tower Bridge",
+    tags:["touristy"],primary:"touristy",
+    weather:"either",weatherNote:"<strong>Works in most weather</strong> — Crown Jewels, White Tower, and most exhibits are indoor. The Tower Green is exposed but can be done quickly in rain.",
+    highlights:"Crown Jewels; Yeoman Warder (Beefeater) guided tours every 30 min; White Tower with royal armour; Tower Bridge glass floor walkway and Victorian engine rooms",
+    duration:"3–5 hours for both sites",walking:"Moderate — Tower grounds partly cobbled; Tower Bridge has a lift to the walkway",
+    getting:'Best by Thames Clipper or river cruise to Tower Pier; or District/Circle line to Tower Hill (~30 min from Kilburn). <a href="https://www.google.com/maps/search/?api=1&query=Tower+of+London+EC3N+4AB" target="_blank" rel="noopener">📍 Tower of London</a> · <a href="https://www.google.com/maps/search/?api=1&query=Tower+Bridge+London+SE1+2UP" target="_blank" rel="noopener">📍 Tower Bridge</a>',
+    food:[
+      {type:'sit-down',text:'Hawksmoor Guildhall — one of London\'s best steak restaurants, 10 min walk, worth booking for a special dinner'},
+      {type:'sit-down',text:'St Katharine Docks — 5 min walk, pleasant marina setting with several restaurants for all budgets'},
+      {type:'casual',text:'Borough Market — 15 min on foot via London Bridge, excellent for a casual lunch'},
+      {type:'veg',text:'Arabica Bar & Kitchen near London Bridge is strongly Middle Eastern and vegetarian-friendly. Padella (Borough Market area) has excellent pasta including vegetarian options'}
+    ],
+    connection:"<strong>Ideal split-group day:</strong> older adults do Tower of London + Tower Bridge while the toddler group does Mudlarks at the Museum of London Docklands (same river, 15 min by Clipper further east). Meet for lunch at West India Quay or St Katharine Docks midday.",
+    crowd:"high",crowdNote:"<strong>One of London's busiest attractions</strong> — book both Tower of London and Tower Bridge in advance. Yeoman Warder tours are free with entry.",
+    tip:"Book Crown Jewels timed entry in advance. Yeoman Warder tours run every 30 min and are the best way to see the Tower."
+  },
+  {
+    title:"Portobello Road Market",
+    tags:["relaxed","everyone"],primary:"relaxed",
+    weather:"sun",weatherNote:"<strong>Best in sunshine</strong> — outdoor street market. Light drizzle is manageable; heavy rain sends most traders home early.",
+    highlights:"One of London's most iconic markets; Saturday = full antiques day plus food stalls and street performers; vintage clothing, ceramics, prints, books; genuine Notting Hill feel — very close to Kilburn",
+    duration:"2–3 hours",walking:"Low — 0.3–0.5 mile street market, all flat",
+    getting:'Bus 328 or 52 from Kilburn High Road (~15 min); or Jubilee to Notting Hill Gate (15 min). <a href="https://www.google.com/maps/search/?api=1&query=Portobello+Road+Market+London+W11+1LU" target="_blank" rel="noopener">📍 Portobello Road Market</a>',
+    food:[
+      {type:'casual',text:'Market food stalls throughout — jerk chicken, crêpes, artisan coffee; excellent and varied'},
+      {type:'sit-down',text:'Gold restaurant — Jamaican, very good, a Notting Hill favourite, book ahead on Saturdays'},
+      {type:'sit-down',text:'Electric Diner on Portobello — American-style diner, open all day, no bookings'},
+      {type:'veg',text:'The Grain Store (nearby King\'s Cross) is worth noting for a purely vegetarian-led menu. At the market itself, the artisan bread and cheese stalls are outstanding for vegetarians'}
+    ],
+    connection:"Very close to Kilburn — an easy morning out that doesn't require much planning or travel. Can be combined with a walk through Notting Hill to Holland Park (20 min walk south) for a peaceful afternoon in one of London's most beautiful parks.",
+    crowd:"high",crowdNote:"<strong>Very busy Saturday mornings</strong> by 10:30am. Arrive before 10am for easy navigation. Friday is quieter and better for food stalls.",
+    tip:"Saturday is the big antiques day — arrive early for the best stalls. Friday is quieter if food stalls are the priority."
+  },
+  {
+    title:"World Cup 2026 — Outdoor Fan Zone",
+    tags:["everyone"],primary:"everyone",
+    weather:"sun",weatherNote:"<strong>Outdoor setting</strong> — Grand Junction Arms has some covered seating but is primarily an open garden. Check weather before heading out.",
+    highlights:"Round of 16 (4–7 Jul) and Quarterfinals (9–10 Jul) fall in your full-group window; canalside outdoor big screen at Grand Junction Arms (~20 min from Kilburn); relaxed enough for a mixed group during day matches",
+    duration:"2–3 hours per match",walking:"Minimal",
+    getting:'15–20 min walk from Kilburn High Road toward Harlesden. Grand Junction Arms, Acton Lane, NW10 7AD. <a href="https://www.google.com/maps/search/?api=1&query=Grand+Junction+Arms+Acton+Lane+London+NW10+7AD" target="_blank" rel="noopener">📍 Grand Junction Arms</a> · <a href="https://www.google.com/maps/search/?api=1&query=Between+the+Bridges+South+Bank+London" target="_blank" rel="noopener">📍 Between the Bridges, South Bank</a>',
+    food:[
+      {type:'casual',text:'Food vendors on-site at Grand Junction Arms during the tournament'},
+      {type:'sit-down',text:'Chamberlayne Road, Kensal Rise — excellent independent restaurants 10 min walk for before or after'},
+      {type:'casual',text:'The Trellick Arms on Golborne Road — relaxed pub, good food, closer to the walk back to Kilburn'},
+      {type:'veg',text:'Chamberlayne Road has several vegetarian-friendly cafés and restaurants including Sacré-Coeur (French, good veggie options)'}
+    ],
+    connection:"Grand Junction Arms is an easy walk from Kilburn — no transport needed. The South Bank fan zone at Between The Bridges is a bigger, more lively option if you want a larger screen and more atmosphere, but involves a 25 min Jubilee line journey.",
+    crowd:"medium",crowdNote:"<strong>Crowd size depends entirely on the match</strong> — England knockout games will be very busy. Arrive 30–45 min early for a good spot.",
+    tip:"Check specific kickoff times closer to the date — some are at normal UK evening times (7–9pm), others are late due to North American time zones."
+  },
+  {
+    title:"The Hill Garden & Pergola",
+    tags:["relaxed"],primary:"relaxed",
+    weather:"sun",weatherNote:"<strong>Best in sunshine</strong> — lingering on the pergola in the roses is the point. Atmospheric in light rain; not suited to a downpour.",
+    highlights:"Hidden Edwardian elevated walkway and walled garden; pergola draped in roses and climbing plants in July; sweeping views over Golders Hill Park; very peaceful even on busy summer days",
+    duration:"45 min – 1.5 hours",walking:"Low — level pergola walk; access via a short flight of stone steps",
+    getting:'Bus 268 from Kilburn to Golders Green (~20 min), then walk through Golders Hill Park north. <a href="https://www.google.com/maps/search/?api=1&query=Hill+Garden+and+Pergola+West+Heath+Road+London+NW3" target="_blank" rel="noopener">📍 Hill Garden & Pergola</a>',
+    food:[
+      {type:'sit-down',text:'Golders Hill Park Café — 5 min walk, pleasant terrace with good food and ice cream'},
+      {type:'casual',text:'Golders Green Road — 10 min walk, excellent variety of restaurants and cafés for all tastes'},
+      {type:'veg',text:'Golders Green has one of London\'s best concentrations of vegetarian food — Jewish deli, Middle Eastern, and fully vegetarian restaurants all nearby'}
+    ],
+    connection:"Almost always combined with Golders Hill Park Zoo on the same afternoon — walk from the zoo through the northern end of the park to find the pergola gate on West Heath Road.",
+    crowd:"low",crowdNote:"<strong>One of London's best-kept secrets</strong> — rarely crowded, even in summer. Almost always peaceful.",
+    tip:"The entrance gate on West Heath Road is very easy to miss. Best in late afternoon when the light is warm."
+  },
+  {
+    title:"Little Venice",
+    tags:["relaxed","everyone"],primary:"relaxed",
+    weather:"either",weatherNote:"<strong>Pleasant in most weather</strong> — café boats and nearby pubs provide shelter in rain. Best in sunshine for lingering by the water.",
+    highlights:"Peaceful canal junction; colourful narrowboats; café boats along Browning's Island; Puppet Barge children's theatre on weekends; natural start for the Camden canal walk",
+    duration:"45 min – 1.5 hours as a standalone; start of the canal walk day",walking:"Minimal — compact, flat towpaths",
+    getting:'Bakerloo to Warwick Avenue (~6 min from Kilburn); 5 min walk to the canal junction on Blomfield Road. <a href="https://www.google.com/maps/search/?api=1&query=Little+Venice+Blomfield+Road+London+W9+2PF" target="_blank" rel="noopener">📍 Little Venice</a>',
+    food:[
+      {type:'sit-down',text:'The Waterway pub — canal terrace, decent food, good for a relaxed sit-down before the walk'},
+      {type:'casual',text:'Jason\'s Restaurant — on a moored canal boat, casual and characterful'},
+      {type:'casual',text:'Café Laville — above the canal junction on Edgware Road, good coffee and snacks with canal views'},
+      {type:'veg',text:'Café Laville has good vegetarian options including vegetarian mezze boards'}
+    ],
+    connection:"<strong>Natural starting point for the canal walk to Camden</strong> — allow 20 min here before setting off along the towpath. The walk passes London Zoo's northern boundary (free aviary views) and arrives at Camden Market about 60 min later.",
+    crowd:"low",crowdNote:"<strong>Consistently quiet and local</strong> — one of the most peaceful spots within easy reach of Kilburn.",
+    tip:"The Puppet Barge runs toddler-friendly shows on some weekends — check their schedule in advance as they book up."
+  }
+];
+
+const daytrips = [
+  {
+    title:"Windsor Castle & Great Park",
+    tags:["daytrip","toddlers","touristy","everyone"],primary:"daytrip",
+    weather:"either",weatherNote:"<strong>Good in most weather</strong> — castle interiors are extensive and indoor. Windsor Great Park and the Long Walk are outdoor but sheltered areas exist.",
+    highlights:"Working royal castle: State Apartments, St George's Chapel; Changing of the Guard (Thu &amp; Sat); dedicated family learning centre inside with Duplo and a train set; Windsor Great Park and the Long Walk",
+    duration:"Full day",walking:"Moderate — castle grounds slightly hilly and cobbled; Windsor Great Park flat",
+    getting:'Train from Paddington to Slough, change to Windsor & Eton Central (~45 min); or Waterloo to Windsor & Eton Riverside direct (~55 min). From Kilburn: Jubilee to Paddington (~10 min). Total ~1 hr. <a href="https://www.google.com/maps/search/?api=1&query=Windsor+Castle+Castle+Hill+Windsor+SL4+1NJ" target="_blank" rel="noopener">📍 Windsor Castle</a> · <a href="https://www.google.com/maps/search/?api=1&query=Windsor+Great+Park+Windsor+SL4+2HT" target="_blank" rel="noopener">📍 Windsor Great Park</a>',
+    food:[
+      {type:'sit-down',text:'Two Brewers pub — right by the Long Walk entrance, reliable food, large garden'},
+      {type:'casual',text:'Windsor High Street — plenty of options from cafés to chains, something for everyone'},
+      {type:'casual',text:'Café in the Park at Windsor Great Park — simple food, good views, great for a break with toddlers'},
+      {type:'veg',text:'Giggling Squid in Windsor town centre has excellent vegetarian Thai options. The Two Brewers also has good veggie pub food'}
+    ],
+    connection:"<strong>⭐ Best toddler-friendly day trip of the group.</strong> Legoland Windsor is nearby but treat it as a completely separate full day — do not try to combine the two.",
+    crowd:"high",crowdNote:"<strong>Very popular in summer</strong> — pre-book castle tickets online. Changing of the Guard draws large crowds; arrive at least 30 min early for a good spot.",
+    tip:"The castle's family learning centre is genuinely designed for small children. Pre-book entry online."
+  },
+  {
+    title:"Oxford",
+    tags:["daytrip","toddlers","everyone","relaxed"],primary:"daytrip",
+    weather:"either",weatherNote:"<strong>Good in most weather</strong> — the University Museum of Natural History and Pitt Rivers Museum are free, indoor, and perfect wet-day options. Christ Church Meadow is best in sunshine.",
+    highlights:"University colleges and the Bodleian (Harry Potter filming locations); Oxford University Museum of Natural History — free, indoor, dinosaurs; Christ Church Meadow for a riverside picnic",
+    duration:"Full day",walking:"Low to moderate — flat city centre; Christ Church Meadow easy with a pushchair",
+    getting:'Train from Paddington (~1 hour, very frequent). From Kilburn: Jubilee or Bakerloo to Paddington (~10 min). Total ~1 hr 15 min. <a href="https://www.google.com/maps/search/?api=1&query=Oxford+Train+Station+Park+End+Street+Oxford+OX1+1HS" target="_blank" rel="noopener">📍 Oxford Station</a> · <a href="https://www.google.com/maps/search/?api=1&query=Oxford+University+Museum+of+Natural+History+OX1+3PW" target="_blank" rel="noopener">📍 Natural History Museum Oxford</a>',
+    food:[
+      {type:'casual',text:'Oxford Covered Market — pies, excellent sandwiches, good coffee; one of the best covered markets in England'},
+      {type:'sit-down',text:'Vaults & Garden — café inside the University Church, beautiful setting, excellent vegetarian food'},
+      {type:'sit-down',text:'The Eagle and Child pub — where Tolkien and C.S. Lewis drank; good pub food in a historic setting'},
+      {type:'veg',text:'Vaults & Garden is strongly vegetarian-led. The Covered Market also has excellent vegetarian options throughout'}
+    ],
+    connection:"The Natural History Museum and the Pitt Rivers Museum (next door, free, extraordinary ethnography collection) are both ideal rainy-day or toddler-reset options — no booking needed, open daily.",
+    crowd:"high",crowdNote:"<strong>Busy in summer</strong> but spread across a city — rarely feels oppressive. Weekday visits are noticeably calmer.",
+    tip:"The Pitt Rivers Museum next to the Natural History Museum is free and extraordinary — one of the most unusual collections in England. Worth 45 min even with toddlers."
+  },
+  {
+    title:"Hampton Court Palace",
+    tags:["daytrip","touristy","everyone"],primary:"daytrip",
+    weather:"either",weatherNote:"<strong>Works in most weather</strong> — the palace interior is extensive and fully indoor. The hedge maze and formal gardens are outdoor.",
+    highlights:"Henry VIII's Tudor palace; the famous yew hedge maze — toddler and adult favourite; vast baroque gardens; Great Hall with original medieval tapestries; riverside location",
+    duration:"Full day",walking:"Moderate — large complex; formal gardens flat and extensive",
+    getting:'Train from Waterloo direct to Hampton Court (~35–40 min). From Kilburn: Bakerloo to Waterloo (~20 min). Total ~1 hr. <a href="https://www.google.com/maps/search/?api=1&query=Hampton+Court+Palace+East+Molesey+KT8+9AU" target="_blank" rel="noopener">📍 Hampton Court Palace</a>',
+    food:[
+      {type:'sit-down',text:'The Tiltyard Café in the palace grounds — sit-down café with good food and garden views; suitable for a group'},
+      {type:'casual',text:'The Cardinal Wolsey pub — 10 min walk by the station, good food and large garden'},
+      {type:'casual',text:'Picnic in the formal gardens — actively encouraged; a lovely option for the whole group'},
+      {type:'veg',text:'The Tiltyard Café has solid vegetarian options. Carluccio\'s in Kingston (15 min bus) is good for vegetarian Italian'}
+    ],
+    connection:"On the same District line as Kew Gardens (~20 min apart) — Kew in the morning and Hampton Court in the afternoon is possible but both are really full days in their own right. Richmond Park is also nearby (15 min bus) for a deer-spotting walk.",
+    crowd:"medium",crowdNote:"<strong>Less busy than central London</strong> but popular in summer. Weekday visits noticeably calmer.",
+    tip:"Save the maze until last — most adults get properly lost and it takes longer than expected. The toddlers love it."
+  },
+  {
+    title:"Bath",
+    tags:["daytrip","touristy","relaxed"],primary:"daytrip",
+    weather:"either",weatherNote:"<strong>Works in any weather</strong> — the Roman Baths are fully indoor. The Royal Crescent, Pulteney Bridge, and Victoria Park are outdoor but the city is easily navigable in rain.",
+    highlights:"Roman Baths (outstanding for the older adults); Royal Crescent — best Georgian architecture in Britain; Victoria Park playground and lawns; Pulteney Bridge; one of England's most beautiful cities",
+    duration:"Full day",walking:"Moderate — city is hilly in places; Royal Crescent area has some slopes",
+    getting:'Train from Paddington direct (~1 hr 20 min). From Kilburn: Jubilee or Bakarloo to Paddington (~10 min). Total ~1 hr 45 min. <a href="https://www.google.com/maps/search/?api=1&query=Bath+Spa+Station+Dorchester+Street+Bath+BA1+1SS" target="_blank" rel="noopener">📍 Bath Spa Station</a> · <a href="https://www.google.com/maps/search/?api=1&query=Roman+Baths+Bath+BA1+1LZ" target="_blank" rel="noopener">📍 Roman Baths</a>',
+    food:[
+      {type:'sit-down',text:'The Pump Room — grand Georgian restaurant right next to the Baths, excellent set lunch, book ahead'},
+      {type:'casual',text:'Sally Lunn\'s Refreshment House — oldest building in Bath, famous buns, relaxed and characterful'},
+      {type:'sit-down',text:'The Seafood Restaurant Bath — for a special occasion dinner if staying later'},
+      {type:'veg',text:'Acorn Vegetarian Kitchen in Bath is one of the UK\'s best vegetarian restaurants — highly recommended if the group includes vegetarians'}
+    ],
+    connection:`<strong>Split-group day — not everyone needs to go.</strong><br><br>
+🚆 <strong>Going to Bath (4 older adults):</strong> Train from Paddington (~1 hr 20 min). Roman Baths in the morning, Royal Crescent walk, lunch at The Pump Room, Pulteney Bridge, and Thermae Bath Spa if they want a long afternoon. Return train from Bath Spa direct to Paddington.<br><br>
+🏙️ <strong>Staying in London (toddlers + 3 relaxed adults):</strong> This is a good day for Hampstead Heath (paddling pool + Parliament Hill), Golders Hill Park zoo, or a canal walk to Camden. Low-effort, close to home, no long travel with tired toddlers.<br><br>
+⚠️ The Roman Baths have no stroller access and are stairs-heavy — not suitable for toddlers. Bath is hilly in places which also adds up over a full day with small children.`,
+    crowd:"high",crowdNote:"<strong>Very busy in summer</strong> — one of England's most visited cities. The Roman Baths need advance booking. Weekday visits make a significant difference.",
+    tip:"Book the Roman Baths in advance online. Acorn Vegetarian Kitchen is worth booking ahead too if vegetarians are in the group."
+  },
+  {
+    title:"Cambridge",
+    tags:["daytrip","relaxed","everyone"],primary:"daytrip",
+    weather:"either",weatherNote:"<strong>Works in most weather</strong> — Fitzwilliam Museum and college chapels are indoor. Punting in light rain is pleasant; heavy rain makes it miserable.",
+    highlights:"King's College Chapel; punting on the River Cam (toddlers enjoy the boat element); Fitzwilliam Museum (free, world-class); The Backs — meadows behind the colleges for a picnic",
+    duration:"Full day",walking:"Moderate — flat city; note the station is 20 min walk or a short bus ride from the centre",
+    getting:'Train from King\'s Cross (~50 min). From Kilburn: Jubilee to King\'s Cross (~10 min). Total ~1 hr. Take a taxi or Citi 1 bus from the station with a pushchair. <a href="https://www.google.com/maps/search/?api=1&query=Cambridge+Train+Station+Station+Road+Cambridge+CB1+2JW" target="_blank" rel="noopener">📍 Cambridge Station</a> · <a href="https://www.google.com/maps/search/?api=1&query=Fitzwilliam+Museum+Cambridge+CB2+1RB" target="_blank" rel="noopener">📍 Fitzwilliam Museum</a>',
+    food:[
+      {type:'sit-down',text:'The Anchor pub — riverside, relaxed, good food with great views of the punters'},
+      {type:'casual',text:'Fitzbillies — famous Chelsea buns and coffee, a Cambridge institution, good for a morning stop'},
+      {type:'sit-down',text:'The Eagle on Benet Street — historic pub where Watson and Crick announced DNA; excellent pub food'},
+      {type:'veg',text:'Stem + Glory in Cambridge is a fully plant-based restaurant with genuinely excellent food — one of the best in the UK'}
+    ],
+    connection:"King's Cross departure station makes this easy to combine logistically with a Granary Square fountains morning before catching the train — though that makes for a very full day.",
+    crowd:"high",crowdNote:"<strong>Busy in summer</strong> but spread across the city. Punt tours book up — reserve in advance. The Bridge of Sighs area gets very congested in the morning.",
+    tip:"Hire a chauffeured punt rather than self-hire — commentary is better, nobody has to steer, and the risk of a toddler-related pole incident drops to zero."
+  },
+  {
+    title:"Dover — White Cliffs & Castle",
+    tags:["daytrip","touristy"],primary:"daytrip",
+    weather:"sun",weatherNote:"<strong>Best in sunshine</strong> — the cliff walks are the main draw and require good weather. Views to France need clear days.",
+    highlights:"Iconic White Cliffs walk (South Foreland Lighthouse route); Dover Castle with wartime secret tunnels; views across to France on a clear day; Samphire Hoe nature reserve",
+    duration:"Full day",walking:"High — cliff walks are 2–5 miles, exposed, unfenced edges; not suitable for a pushchair",
+    getting:'Train from St Pancras (~1 hr 20 min) or Victoria (~1 hr 45 min). From Kilburn: Jubilee to St Pancras (~10 min). Total ~1 hr 30 min. <a href="https://www.google.com/maps/search/?api=1&query=Dover+Castle+Castle+Hill+Road+Dover+CT16+1HU" target="_blank" rel="noopener">📍 Dover Castle</a> · <a href="https://www.google.com/maps/search/?api=1&query=White+Cliffs+of+Dover+National+Trust+CT15+5NA" target="_blank" rel="noopener">📍 White Cliffs visitor centre</a>',
+    food:[
+      {type:'casual',text:'White Cliffs Café at the National Trust visitor centre — simple food, good views'},
+      {type:'sit-down',text:'The Coastguard pub at St Margaret\'s Bay — lovely seaside pub 20 min walk from the cliffs, good food'},
+      {type:'casual',text:'Pack a clifftop picnic — the most atmospheric way to eat here on a clear day'},
+      {type:'veg',text:'Options are limited in Dover itself — pack vegetarian picnic food from London for the best experience on the cliffs'}
+    ],
+    connection:`<strong>Split-group day — not everyone should go.</strong><br><br>
+🚆 <strong>Going to Dover (4 older adults):</strong> Train from St Pancras (~1 hr 20 min). Start at Dover Castle in the morning (wartime tunnels are the highlight), then the National Trust White Cliffs walk in the afternoon — the South Foreland Lighthouse route is the best section. Clear days give views across to France. Return from Dover Priory direct to St Pancras or Victoria.<br><br>
+🏙️ <strong>Staying in London (toddlers + 3 relaxed adults):</strong> Natural History Museum or London Transport Museum if the weather is uncertain; Granary Square fountains or Hampstead Heath if it's sunny. Short travel, easy day, no pressure.<br><br>
+⚠️ The White Cliffs paths are 2–5 miles, fully exposed, with unfenced cliff edges in places — completely unsuitable for toddlers and pushchairs. Dover Castle also involves significant stair climbing. This is genuinely a trip for the older adults only.`,
+    crowd:"low",crowdNote:"<strong>Much less crowded than London sights</strong> — the White Cliffs walk is rarely packed even in summer.",
+    tip:"This works best as a day for the 4 older adults only while the toddler group stays in London. The cliff paths are not pushchair-friendly and have unfenced edges."
+  }
+];
+
+function buildCard(act) {
+  const chips = act.tags.map(t => `<span class="chip ${CHIP_CLS[t]}">${GROUPS[t]}</span>`).join('');
+  const stripe = STRIPE[act.primary];
+  const tipBg  = TIP_BG[act.primary];
+  const weatherIcon = act.weather==='sun'?'☀️':act.weather==='rain'?'🌧️':'⛅';
+  const pips = CROWD_PIPS[act.crowd];
+  const pipHtml = pips.map(on => {
+    const cls = on?(act.crowd==='low'?'on-low':act.crowd==='medium'?'on-medium':'on-high'):'';
+    return `<span class="pip ${cls}"></span>`;
+  }).join('');
+  const crowdLabel = act.crowd==='low'?'Low crowds':act.crowd==='medium'?'Moderate crowds':'High crowds';
+
+  const foodHtml = act.food.map(f => `
+    <div class="food-row">
+      <span class="food-tag ${f.type==='sit-down'?'sit-down':f.type==='casual'?'casual':'veg'}">${f.type==='sit-down'?'Sit-down':f.type==='casual'?'Casual':'🥗 Veggie'}</span>
+      <span class="food-val">${f.text}</span>
+    </div>`).join('');
+
+  const connectionHtml = act.connection ? `
+    <div class="connect-row">
+      <span class="connect-icon">🔗</span>
+      <span class="connect-text">${act.connection}</span>
+    </div>` : '';
+
+  const el = document.createElement('article');
+  el.className = 'card';
+  el.dataset.tags = act.tags.join(',');
+  el.dataset.weather = act.weather;
+  el.innerHTML = `
+    <div class="card-stripe" style="background:${stripe}"></div>
+    <div class="card-header">
+      <h2 class="card-title">${act.title}</h2>
+      <span class="weather-badge">${weatherIcon}</span>
+    </div>
+    <div class="card-inner">
+      <div class="card-tags">${chips}</div>
+      <div class="weather-row">
+        <span class="weather-icon-sm">${weatherIcon}</span>
+        <span class="weather-text">${act.weatherNote}</span>
+      </div>
+      <div class="info-rows">
+        <div class="info-row"><span class="info-icon">✦</span><div><div class="info-label">Highlights</div><div class="info-val">${act.highlights}</div></div></div>
+        <div class="info-row"><span class="info-icon">⏱</span><div><div class="info-label">Duration</div><div class="info-val">${act.duration}</div></div></div>
+        <div class="info-row"><span class="info-icon">👟</span><div><div class="info-label">Walking</div><div class="info-val">${act.walking}</div></div></div>
+        <div class="info-row"><span class="info-icon">🚇</span><div><div class="info-label">Getting there from Kilburn</div><div class="info-val">${act.getting}</div></div></div>
+        <div class="info-row"><span class="info-icon">🍽</span><div><div class="info-label">Food & Drink</div><div class="food-block">${foodHtml}</div></div></div>
+      </div>
+      ${connectionHtml}
+      <div class="card-divider"></div>
+      <div class="crowd-row">
+        <div class="crowd-pip">${pipHtml}</div>
+        <div class="crowd-label"><strong>${crowdLabel}:</strong> ${act.crowdNote}</div>
+      </div>
+      <div class="card-tip" style="background:${tipBg};border-left-color:${stripe}"><strong>Tip:</strong> ${act.tip}</div>
+    </div>`;
+  return el;
+}
+
+const londonGrid  = document.getElementById('london-grid');
+const daytripGrid = document.getElementById('daytrip-grid');
+london.forEach(a => londonGrid.appendChild(buildCard(a)));
+daytrips.forEach(a => daytripGrid.appendChild(buildCard(a)));
+
+// Filters
+const countBar = document.getElementById('count-bar');
+let activeGroup = 'all', activeWeather = 'all';
+
+function applyFilters() {
+  const cards = document.querySelectorAll('.card');
+  let shown = 0;
+  cards.forEach(c => {
+    const gm = activeGroup==='all' || c.dataset.tags.split(',').includes(activeGroup);
+    const wm = activeWeather==='all' || c.dataset.weather===activeWeather;
+    const vis = gm && wm;
+    c.classList.toggle('is-hidden', !vis);
+    if(vis) shown++;
+  });
+  const total = london.length + daytrips.length;
+  // show/hide day trip section if all cards within it are hidden
+  const dtCards = daytripGrid.querySelectorAll('.card:not(.is-hidden)');
+  document.getElementById('daytrip-section').style.display = dtCards.length===0 ? 'none' : '';
+  countBar.textContent = (activeGroup==='all'&&activeWeather==='all') ? `All ${total} options` : `${shown} of ${total} options`;
+}
+
+document.querySelectorAll('.f-btn').forEach(b => b.addEventListener('click', () => {
+  activeGroup = b.dataset.f;
+  document.querySelectorAll('.f-btn').forEach(x => x.classList.toggle('active', x.dataset.f===activeGroup));
+  applyFilters();
+}));
+document.querySelectorAll('.w-btn').forEach(b => b.addEventListener('click', () => {
+  activeWeather = b.dataset.w;
+  document.querySelectorAll('.w-btn').forEach(x => x.classList.toggle('active', x.dataset.w===activeWeather));
+  applyFilters();
+}));
+applyFilters();
+</script>
+</body>
+</html>
