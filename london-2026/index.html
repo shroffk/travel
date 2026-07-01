@@ -167,6 +167,14 @@
     .chip-res-family{background:#FDF6E3;color:#8B6500}
     .chip-res-bkfast{background:#F0E8EE;color:#620040}
     .chip-res-local{background:#F0F4FB;color:#1A4A8A}
+
+    /* COLLAPSE-ALL TOGGLE */
+    .collapse-all-toggle{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;letter-spacing:.03em;color:var(--muted);cursor:pointer;user-select:none;flex-shrink:0;white-space:nowrap}
+    .collapse-all-toggle:hover{color:var(--text)}
+    .collapse-all-toggle input[type=checkbox]{accent-color:var(--navy);cursor:pointer;width:13px;height:13px;flex-shrink:0}
+    .collapse-all-toggle.light{color:rgba(255,255,255,.55)}
+    .collapse-all-toggle.light:hover{color:#fff}
+    .collapse-all-toggle.light input{accent-color:rgba(255,255,255,.9)}
   </style>
 </head>
 <body>
@@ -215,6 +223,9 @@
       <div class="section-sub">All based in the city — from Kilburn</div>
     </div>
     <div class="section-rule"></div>
+    <label class="collapse-all-toggle" title="Collapse or expand all cards in this section">
+      <input type="checkbox" id="collapse-london"> Collapse all
+    </label>
     <span class="section-badge badge-london">In the city</span>
   </div>
   <div class="grid" id="london-grid"></div>
@@ -223,10 +234,13 @@
   <section class="day-trip-section" id="daytrip-section">
     <div class="day-trip-banner">
       <div class="day-trip-banner-icon">🚆</div>
-      <div>
+      <div style="flex:1">
         <div class="day-trip-banner-title">Day Trips from London</div>
         <div class="day-trip-banner-sub">All reachable by train from Paddington, Waterloo, or King's Cross · Kilburn is well connected to all three via the Jubilee or Bakerloo line</div>
       </div>
+      <label class="collapse-all-toggle light" title="Collapse or expand all cards in this section">
+        <input type="checkbox" id="collapse-daytrip"> Collapse all
+      </label>
     </div>
     <div class="grid" id="daytrip-grid"></div>
   </section>
@@ -235,10 +249,13 @@
   <section class="res-section" id="res-section">
     <div class="res-banner">
       <div class="res-banner-icon">🍽</div>
-      <div>
+      <div style="flex:1">
         <div class="res-banner-title">Local Restaurants — Kilburn &amp; West Hampstead</div>
         <div class="res-banner-sub">Walking distance or a short bus ride from home base · NW6 area · strong vegetarian focus · all bookable from the flat</div>
       </div>
+      <label class="collapse-all-toggle light" title="Collapse or expand all cards in this section">
+        <input type="checkbox" id="collapse-res"> Collapse all
+      </label>
     </div>
     <div class="grid" id="res-grid"></div>
   </section>
@@ -1162,6 +1179,27 @@ function buildRestaurantCard(r) {
 const resGrid = document.getElementById('res-grid');
 restaurants.forEach(r => resGrid.appendChild(buildRestaurantCard(r)));
 enableDragSort(resGrid);
+
+// ── Collapse-all per section ──────────────────────────────────────────────────
+function setupCollapseAll(cbId, gridId) {
+  const cb   = document.getElementById(cbId);
+  const grid = document.getElementById(gridId);
+  function syncCheckbox() {
+    const cards     = [...grid.querySelectorAll('.card')];
+    const nCollapsed = cards.filter(c => c.classList.contains('is-collapsed')).length;
+    cb.checked       = nCollapsed === cards.length && cards.length > 0;
+    cb.indeterminate = nCollapsed > 0 && nCollapsed < cards.length;
+  }
+  cb.addEventListener('change', () => {
+    grid.querySelectorAll('.card').forEach(c => c.classList.toggle('is-collapsed', cb.checked));
+  });
+  grid.addEventListener('click', e => {
+    if (e.target.closest('.card-collapse-btn')) syncCheckbox();
+  });
+}
+setupCollapseAll('collapse-london',  'london-grid');
+setupCollapseAll('collapse-daytrip', 'daytrip-grid');
+setupCollapseAll('collapse-res',     'res-grid');
 </script>
 </body>
 </html>
